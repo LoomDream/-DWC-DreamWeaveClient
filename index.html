@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dreamweave Client</title>
+    <link rel="icon" href="data:,">
+  </head>
+  <body>
+    <canvas id="scene" aria-label="Dreamweave 3D scene"></canvas>
+
+    <div class="hud">
+      <header class="topbar">
+        <div class="brand">
+          <h1>Dreamweave</h1>
+          <p id="sceneName">等待同步</p>
+        </div>
+        <div class="status-strip">
+          <span id="serverBadge" class="badge warn">未连接</span>
+          <span id="playerBadge" class="badge">访客</span>
+          <span id="coordBadge" class="badge">0, 0, 0</span>
+        </div>
+        <div class="actions">
+          <button id="connectBtn" class="btn primary" type="button">连接</button>
+          <button id="syncBtn" class="btn" type="button">同步</button>
+          <button id="loginBtn" class="btn" type="button">账号</button>
+          <button id="nextBtnTop" class="icon-btn" type="button" title="下一句" aria-label="下一句">▶</button>
+        </div>
+      </header>
+
+      <main class="midrow">
+        <aside class="panel">
+          <h2>织梦核心</h2>
+          <div class="meters">
+            <div>
+              <div class="meter-label"><span>共鸣</span><span id="resonanceText">72%</span></div>
+              <div class="bar"><span id="resonanceBar" style="--value:72%"></span></div>
+            </div>
+            <div>
+              <div class="meter-label"><span>稳定</span><span id="stabilityText">88%</span></div>
+              <div class="bar"><span id="stabilityBar" style="--value:88%"></span></div>
+            </div>
+          </div>
+          <h2>任务</h2>
+          <div id="taskList" class="list"></div>
+        </aside>
+        <div></div>
+        <aside class="panel right">
+          <h2>事件</h2>
+          <div id="logList" class="list log-list"></div>
+        </aside>
+      </main>
+
+      <section class="dialogue-panel">
+        <div class="speaker">
+          <strong id="speakerName">系统</strong>
+          <span id="speakerRole">客户端</span>
+        </div>
+        <p id="dialogueText">按“连接”从 Dreamweave Server 同步剧情内容。</p>
+        <button id="nextBtn" class="btn primary" type="button">继续</button>
+      </section>
+    </div>
+
+    <div class="controls" aria-label="移动控制">
+      <button class="icon-btn up" type="button" data-hold="forward" aria-label="向前">▲</button>
+      <button class="icon-btn left" type="button" data-hold="left" aria-label="向左">◀</button>
+      <button class="icon-btn down" type="button" data-hold="backward" aria-label="向后">▼</button>
+      <button class="icon-btn right" type="button" data-hold="right" aria-label="向右">▶</button>
+    </div>
+
+    <div id="settingsOverlay" class="overlay">
+      <form id="settingsForm" class="modal">
+        <h2>连接 Dreamweave Server</h2>
+        <p>客户端运行在 7776 端口，本地开发会把 /api 转发到 7777 服务端。离线模式不需要服务端。</p>
+        <label>
+          <span>API Base URL</span>
+          <input id="apiBaseInput" placeholder="留空使用本地 /api 代理，或填写 https://example.com">
+        </label>
+        <label>
+          <span>Server Secret</span>
+          <input id="serverSecretInput" type="password" autocomplete="off">
+        </label>
+        <div class="actions">
+          <button id="offlineBtn" class="btn" type="button">离线探索</button>
+          <button class="btn primary" type="submit">连接</button>
+        </div>
+        <p id="settingsMessage" class="message"></p>
+      </form>
+    </div>
+
+    <div id="accountOverlay" class="overlay hidden">
+      <form id="accountForm" class="modal">
+        <h2>账号</h2>
+        <div class="form-grid">
+          <label>
+            <span>用户名</span>
+            <input id="usernameInput" autocomplete="username" minlength="3" maxlength="32">
+          </label>
+          <label>
+            <span>密码</span>
+            <input id="passwordInput" type="password" autocomplete="current-password" minlength="6">
+          </label>
+        </div>
+        <label>
+          <span>显示名（注册可选）</span>
+          <input id="displayNameInput" autocomplete="nickname" maxlength="32">
+        </label>
+        <div class="actions">
+          <button id="closeAccountBtn" class="btn" type="button">关闭</button>
+          <button id="registerBtn" class="btn" type="button">注册</button>
+          <button class="btn primary" type="submit">登录</button>
+        </div>
+        <p id="accountMessage" class="message"></p>
+      </form>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
