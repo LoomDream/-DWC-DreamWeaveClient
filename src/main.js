@@ -1,8 +1,16 @@
 import './styles.css';
 import * as THREE from 'three';
 import md5 from 'blueimp-md5';
+import { createDreamweaveWorld, updateDreamweaveWorld } from './models/dreamweaveWorld.js';
 
 const DEFAULT_SECRET = 'change-me-dreamweave-server-secret';
+const CLIENT = {
+  name: 'DreamweaveWeb',
+  version: '0.1.2',
+  platform: 'web',
+  build: 'dev',
+  device: navigator.userAgent.slice(0, 80)
+};
 const DEFAULT_PLAYER = {
   position: { x: 0, y: 1.05, z: 8 },
   rotation: { y: 0 },
@@ -58,7 +66,8 @@ const dom = {
   accountMessage: $('accountMessage'),
   usernameInput: $('usernameInput'),
   passwordInput: $('passwordInput'),
-  displayNameInput: $('displayNameInput')
+  displayNameInput: $('displayNameInput'),
+  emailInput: $('emailInput')
 };
 
 dom.apiBaseInput.value = config.apiBase;
@@ -79,102 +88,11 @@ const clock = new THREE.Clock();
 const playerRig = new THREE.Group();
 playerRig.position.set(DEFAULT_PLAYER.position.x, DEFAULT_PLAYER.position.y, DEFAULT_PLAYER.position.z);
 scene3d.add(playerRig);
+const world = createDreamweaveWorld(scene3d, playerRig);
 
-buildWorld();
 bindUi();
 renderHud();
 animate();
-
-function buildWorld() {
-  scene3d.add(new THREE.HemisphereLight(0x8bd8ff, 0x201812, 1.15));
-
-  const sun = new THREE.DirectionalLight(0xffd28a, 2.4);
-  sun.position.set(-6, 12, 7);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.camera.left = -25;
-  sun.shadow.camera.right = 25;
-  sun.shadow.camera.top = 25;
-  sun.shadow.camera.bottom = -25;
-  scene3d.add(sun);
-
-  const platform = new THREE.Mesh(
-    new THREE.CylinderGeometry(10.5, 12.2, 1.1, 96),
-    new THREE.MeshStandardMaterial({ color: 0x293543, metalness: 0.22, roughness: 0.48 })
-  );
-  platform.position.y = -0.55;
-  platform.receiveShadow = true;
-  platform.castShadow = true;
-  scene3d.add(platform);
-
-  const ringMat = new THREE.MeshStandardMaterial({ color: 0x45d0c1, emissive: 0x123d3b, metalness: 0.45, roughness: 0.32 });
-  for (let i = 0; i < 3; i += 1) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(11.4 + i * 1.2, 0.045, 8, 160), ringMat);
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.05 + i * 0.03;
-    scene3d.add(ring);
-  }
-
-  const anchor = new THREE.Group();
-  const core = new THREE.Mesh(
-    new THREE.OctahedronGeometry(1.35, 1),
-    new THREE.MeshStandardMaterial({ color: 0x7df7e9, emissive: 0x1a6e69, metalness: 0.18, roughness: 0.2 })
-  );
-  core.castShadow = true;
-  anchor.add(core);
-  const halo = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.035, 8, 128), new THREE.MeshBasicMaterial({ color: 0xf5bd56 }));
-  halo.rotation.x = Math.PI / 2;
-  anchor.add(halo);
-  anchor.position.set(0, 2.05, 0);
-  anchor.name = 'anchor';
-  scene3d.add(anchor);
-
-  const towerMat = new THREE.MeshStandardMaterial({ color: 0x1b2635, metalness: 0.3, roughness: 0.5 });
-  const windowMat = new THREE.MeshBasicMaterial({ color: 0xf5bd56 });
-  for (let i = 0; i < 12; i += 1) {
-    const angle = (i / 12) * Math.PI * 2;
-    const radius = 18 + (i % 3) * 4;
-    const height = 4 + (i % 4) * 1.6;
-    const tower = new THREE.Mesh(new THREE.BoxGeometry(1.8, height, 1.8), towerMat);
-    tower.position.set(Math.cos(angle) * radius, height / 2 - 0.5, Math.sin(angle) * radius);
-    tower.rotation.y = -angle;
-    tower.castShadow = true;
-    tower.receiveShadow = true;
-    scene3d.add(tower);
-
-    const glow = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.18, 0.06), windowMat);
-    glow.position.set(tower.position.x, height * 0.58, tower.position.z);
-    glow.rotation.y = tower.rotation.y;
-    scene3d.add(glow);
-  }
-
-  const starGeo = new THREE.BufferGeometry();
-  const starPositions = [];
-  for (let i = 0; i < 800; i += 1) {
-    const radius = 70 + Math.random() * 120;
-    const theta = Math.random() * Math.PI * 2;
-    const y = 10 + Math.random() * 80;
-    starPositions.push(Math.cos(theta) * radius, y, Math.sin(theta) * radius);
-  }
-  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
-  scene3d.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xdceeff, size: 0.16, sizeAttenuation: true })));
-
-  const avatar = new THREE.Group();
-  const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.36, 0.85, 8, 18),
-    new THREE.MeshStandardMaterial({ color: 0xe8f4ff, roughness: 0.42 })
-  );
-  body.castShadow = true;
-  body.position.y = 0.55;
-  const scarf = new THREE.Mesh(
-    new THREE.TorusGeometry(0.42, 0.055, 8, 32, Math.PI * 1.4),
-    new THREE.MeshStandardMaterial({ color: 0xf5bd56, emissive: 0x332006, roughness: 0.35 })
-  );
-  scarf.position.y = 1.05;
-  scarf.rotation.x = Math.PI / 2;
-  avatar.add(body, scarf);
-  playerRig.add(avatar);
-}
 
 function bindUi() {
   window.addEventListener('resize', resize);
@@ -236,22 +154,28 @@ async function connect() {
 }
 
 async function handshake() {
-  const hello = await postJson('/api/hello', {});
+  const hello = await postJson('/api/hello', { client: CLIENT });
   const payload = hello.payload;
   const expectedServerKey = md5(`${config.serverSecret}:${payload.server_nonce}`);
   if (payload.server_key !== expectedServerKey) throw new Error('server proof mismatch');
+  if (isVersionLess(CLIENT.version, payload.minimum_client_version || '0.0.0')) {
+    throw new Error(`client ${CLIENT.version} is below minimum ${payload.minimum_client_version}`);
+  }
 
   const clientNonce = randomHex(16);
   const clientKey = md5(`${config.serverSecret}:${payload.server_nonce}:${clientNonce}`);
   const done = await postJson('/api/hello', {
     handshake_id: payload.handshake_id,
     client_nonce: clientNonce,
-    client_key: clientKey
+    client_key: clientKey,
+    client: CLIENT
   });
 
+  const sessionKey = await sha256Bytes(`${config.serverSecret}:${payload.server_nonce}:${clientNonce}`);
   state.session = {
     handshakeId: payload.handshake_id,
-    sessionKey: await sha256Bytes(`${config.serverSecret}:${payload.server_nonce}:${clientNonce}`)
+    sessionKey,
+    sessionKeyHex: bytesToHex(sessionKey)
   };
   log(done.payload.authenticated ? '握手完成' : '握手响应异常');
 }
@@ -275,18 +199,21 @@ async function loadStory() {
 
 async function register() {
   dom.accountMessage.textContent = '';
+  const uid = dom.usernameInput.value.trim();
+  const passwordMd5 = md5(dom.passwordInput.value);
   try {
     const payload = await signedFetch('/api/register', {
       method: 'POST',
       body: JSON.stringify({
-        username: dom.usernameInput.value.trim(),
-        password: dom.passwordInput.value,
-        display_name: dom.displayNameInput.value.trim() || null
+        uid,
+        nickname: dom.displayNameInput.value.trim() || uid,
+        email: dom.emailInput.value.trim(),
+        password_md5: passwordMd5
       })
     });
     state.user = payload.user;
     dom.accountMessage.textContent = '注册成功，可以登录。';
-    log(`注册用户：${state.user.display_name || state.user.username}`);
+    log(`注册用户：${userLabel(state.user)}`);
   } catch (error) {
     dom.accountMessage.textContent = error.message;
   }
@@ -295,16 +222,18 @@ async function register() {
 
 async function login() {
   dom.accountMessage.textContent = '';
+  const uid = dom.usernameInput.value.trim();
+  const passwordMd5 = md5(dom.passwordInput.value);
   try {
     const payload = await signedFetch('/api/login', {
       method: 'POST',
-      body: JSON.stringify({ username: dom.usernameInput.value.trim(), password: dom.passwordInput.value })
+      body: JSON.stringify({ uid, password_md5: passwordMd5 })
     });
     state.token = payload.token;
     state.user = payload.user;
     localStorage.setItem('dw_session_token', state.token);
     dom.accountOverlay.classList.add('hidden');
-    log(`登录成功：${state.user.display_name || state.user.username}`);
+    log(`登录成功：${userLabel(state.user)}`);
     await syncState(false);
   } catch (error) {
     dom.accountMessage.textContent = error.message;
@@ -351,15 +280,17 @@ async function signedFetch(path, options = {}) {
   const timestamp = String(Math.floor(Date.now() / 1000));
   const nonce = randomHex(16);
   const bodyMd5 = md5(body);
+  const metadataMd5 = md5(clientMetadataText());
   const key = md5([
     config.serverSecret,
-    bytesToHex(state.session.sessionKey),
+    state.session.sessionKeyHex,
     state.session.handshakeId,
     method,
     path,
     bodyMd5,
     timestamp,
-    nonce
+    nonce,
+    metadataMd5
   ].join(':'));
 
   const response = await fetch(apiUrl(path), {
@@ -370,6 +301,11 @@ async function signedFetch(path, options = {}) {
       'X-Dreamweave-Handshake': state.session.handshakeId,
       'X-Dreamweave-Timestamp': timestamp,
       'X-Dreamweave-Nonce': nonce,
+      'X-Dreamweave-Client-Name': CLIENT.name,
+      'X-Dreamweave-Client-Version': CLIENT.version,
+      'X-Dreamweave-Client-Platform': CLIENT.platform,
+      'X-Dreamweave-Client-Build': CLIENT.build,
+      'X-Dreamweave-Client-Device': CLIENT.device,
       'X-Dreamweave-Key': key,
       ...(options.headers || {})
     },
@@ -424,7 +360,7 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05);
   updatePlayer(dt);
-  updateSceneMotion(clock.elapsedTime);
+  updateDreamweaveWorld(world, clock.elapsedTime);
   renderer.render(scene3d, camera);
 }
 
@@ -452,14 +388,6 @@ function updatePlayer(dt) {
   );
   camera.lookAt(playerRig.position.x, playerRig.position.y + 1, playerRig.position.z);
   dom.coordBadge.textContent = `${playerRig.position.x.toFixed(1)}, ${playerRig.position.y.toFixed(1)}, ${playerRig.position.z.toFixed(1)}`;
-}
-
-function updateSceneMotion(t) {
-  const anchor = scene3d.getObjectByName('anchor');
-  if (!anchor) return;
-  anchor.rotation.y = t * 0.55;
-  anchor.children[1].rotation.z = t * 0.9;
-  anchor.position.y = 2.05 + Math.sin(t * 1.4) * 0.16;
 }
 
 function resize() {
@@ -505,7 +433,7 @@ function renderHud() {
   const stats = state.player.stats || DEFAULT_PLAYER.stats;
   setMeter('resonance', Number(stats.resonance ?? 72));
   setMeter('stability', Number(stats.stability ?? 88));
-  dom.playerBadge.textContent = state.user ? (state.user.display_name || state.user.username || '玩家') : '访客';
+  dom.playerBadge.textContent = state.user ? userLabel(state.user) : '访客';
 }
 
 function nextDialogue() {
@@ -555,4 +483,29 @@ function log(message) {
 
 function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+}
+
+function userLabel(user) {
+  return user?.nickname || user?.display_name || user?.uid || user?.username || '玩家';
+}
+
+function clientMetadataText() {
+  return [
+    CLIENT.name,
+    CLIENT.version,
+    CLIENT.platform || '',
+    CLIENT.build || '',
+    CLIENT.device || ''
+  ].join('\n');
+}
+
+function isVersionLess(left, right) {
+  const leftParts = String(left).split('.').map((part) => Number(part) || 0);
+  const rightParts = String(right).split('.').map((part) => Number(part) || 0);
+  const length = Math.max(leftParts.length, rightParts.length);
+  for (let i = 0; i < length; i += 1) {
+    if ((leftParts[i] || 0) < (rightParts[i] || 0)) return true;
+    if ((leftParts[i] || 0) > (rightParts[i] || 0)) return false;
+  }
+  return false;
 }

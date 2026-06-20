@@ -1,6 +1,6 @@
 # Dreamweave Client
 
-Dreamweave pure web client built with Three.js. It is a static frontend that connects to a Dreamweave Server API; it does not include or start a game server.
+Dreamweave pure web client built with Three.js. It is a static frontend that follows the Dreamweave 0.1.2 client protocol and connects to a Dreamweave Server API; it does not include or start a game server.
 
 ## Development
 
@@ -16,6 +16,8 @@ http://127.0.0.1:7776
 ```
 
 The client can run without a server in offline exploration mode. For local development, `/api` is proxied to the Dreamweave Server at `http://127.0.0.1:7777`. If you deploy the static build elsewhere, enter an API Base URL in the connection dialog that points to a compatible Dreamweave Server API.
+
+Generated Three.js scene/model builders live under `src/models/`. Static 3D assets such as `.glb` or `.gltf` files should go under `public/models/`.
 
 ## Build
 
