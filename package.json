@@ -1,0 +1,19 @@
+{
+  "name": "dreamweave-client",
+  "version": "0.1.0",
+  "private": true,
+  "license": "GPL-2.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "blueimp-md5": "^2.19.0",
+    "three": "^0.165.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.11"
+  }
+}
